@@ -1,8 +1,12 @@
 <?php
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\BusController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdminController;
+use Illuminate\Support\Facades\DB;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -23,7 +27,16 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->name('logout');
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $locations = DB::table('routes')
+        ->select('from_location')
+        ->distinct()
+        ->pluck('from_location')
+        ->toArray();
+
+        if (!in_array('Campus (Badda)', $locations)) {
+        $locations[] = 'Campus (Badda)';
+    }
+    return view('dashboard', compact('locations'));
 })->middleware('auth')->name('dashboard');
 
 Route::get('/contact', function () {
@@ -43,4 +56,32 @@ Route::middleware('auth')->group(function () {
         return view('profile.delete-profile');})->name('profile.delete.page');
     Route::delete('/profile/delete', [ProfileController::class, 'destroy'])
         ->name('profile.delete');
+});
+
+Route::get('/buses', [BusController::class, 'index']);
+Route::get('/buses/search', [BusController::class, 'search'])->name('buses.search');
+Route::get('/seat-layout/{id}', [BusController::class, 'seatLayout'])->name('seat.layout');
+Route::post('/book-seat', [BusController::class, 'bookSeat'])->name('seats.book');
+Route::get('/ticket/{id}', [BusController::class, 'ticket'])->name('ticket.view');
+Route::get('/my-tickets', [BusController::class, 'myTickets'])->name('tickets.index');
+
+Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])->name('admin.login');
+Route::post('/admin/login', [AdminAuthController::class, 'login']);
+Route::get('/admin/logout', [AdminAuthController::class, 'logout']);
+
+Route::middleware('admin')->group(function () {
+    //dashboard
+    Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
+    //buses
+    Route::get('/admin/buses', [AdminController::class, 'buses']);
+    Route::post('/admin/buses', [AdminController::class, 'storeBus']);
+    //routes
+    Route::get('/admin/routes', [AdminController::class, 'routes']);
+    Route::post('/admin/routes', [AdminController::class, 'storeRoute']);
+    //schedules
+    Route::get('/admin/schedules', [AdminController::class, 'schedules']);
+    Route::post('/admin/schedules', [AdminController::class, 'storeSchedule']);
+    //announcements
+    Route::get('/admin/announcements', [AdminController::class, 'announcementForm']);
+    Route::post('/admin/announcements/send', [AdminController::class, 'sendAnnouncement']);
 });

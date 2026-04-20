@@ -29,6 +29,13 @@ class User extends Authenticatable
         'password',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function ($user) {
+            $user->admin_id = 1;
+        });
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

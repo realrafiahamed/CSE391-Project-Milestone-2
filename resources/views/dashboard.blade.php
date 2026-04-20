@@ -407,7 +407,7 @@
 
   <ul class="nav-links">
     <li><a href="{{ route('dashboard') }}" class="active">Dashboard</a></li>
-    <li><a href="#">My Tickets</a></li>
+    <li><a href="{{ route('tickets.index') }}">My Tickets</a></li>
     <li><a href="https://www.bracu.ac.bd/students-transport-service" target="_blank">Routes</a></li>
     <li><a href="{{ route('contact') }}">Contact Us</a></li>
 
@@ -451,64 +451,58 @@
       <span>Plan Your Journey</span>
     </div>
 
-    <div class="booking-form">
-      <div class="form-group">
-        <label for="from">From — Pickup Point</label>
-        <select id="from">
-          <option value="">Select pickup location</option>
-          <option>BRAC University (Badda Campus)</option>
-          <option>Uttara Sector 10</option>
-          <option>Mirpur 10 Circle</option>
-          <option>Dhanmondi 27</option>
-          <option>Motijheel Shapla Chattar</option>
-          <option>Badda Link Road</option>
-          <option>Rampura Bridge</option>
-          <option>Gulshan 2</option>
-        </select>
+    <form id="searchForm" method="GET" action="{{ route('buses.search') }}">
+      <div class="booking-form">
+        <div class="form-group">
+          <label for="from">From — Pickup Point</label>
+          <select id="from" name="from" required>
+            <option value="">Select pickup point</option>
+            
+            @foreach($locations as $loc)
+              <option value="{{ $loc }}">{{ $loc }}</option>
+            @endforeach
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="to">To — Drop-off Point</label>
+          <select id="to" name="to" required>
+            <option value="">Select drop-off location</option>
+            
+            @foreach($locations as $loc)
+              <option value="{{ $loc }}">{{ $loc }}</option>
+            @endforeach
+          </select>
+        </div>
+      
+        <div class="route-connector">
+          <span class="route-dot"></span>
+          <span class="route-line"></span>
+          <span class="route-arrow">▶</span>
+        </div>
+
+        <div class="form-group">
+          <label for="travel-date">Travel Date</label>
+          <input type="date" name="date" id="travel-date" required/>
+        </div>
+
+
+        <div class="form-group">
+          <label for="time-slot">Departure Slot</label>
+          <select id="time-slot" name="time" required>
+            <option value="">Select time</option>
+            <option value="07:30:00">07:30 AM – Morning (1st batch)</option>
+            <option value="12:30:00">12:00 PM – Noon</option>
+            <option value="17:00:00">05:00 PM – Afternoon</option>     
+          </select>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="to">To — Drop-off Point</label>
-        <select id="to">
-          <option value="">Select drop-off location</option>
-          <option>BRAC University (Badda Campus)</option>
-          <option>Uttara Sector 10</option>
-          <option>Mirpur 10 Circle</option>
-          <option>Dhanmondi 27</option>
-          <option>Motijheel Shapla Chattar</option>
-          <option>Badda Link Road</option>
-          <option>Rampura Bridge</option>
-          <option>Gulshan 2</option>
-        </select>
+      <div class="form-footer">
+        <button class="btn-reset" type="button" onclick="window.location.href='{{ url()->current() }}'">Clear</button>
+        <button type="submit" class="btn-search">Search Available Buses →</button>
       </div>
-
-      <div class="route-connector">
-        <span class="route-dot"></span>
-        <span class="route-line"></span>
-        <span class="route-arrow">▶</span>
-      </div>
-
-      <div class="form-group">
-        <label for="travel-date">Travel Date</label>
-        <input type="date" id="travel-date" value="2026-03-28" />
-      </div>
-
-      <div class="form-group">
-        <label for="time-slot">Departure Slot</label>
-        <select id="time-slot">
-          <option value="">Select time</option>
-          <option>07:30 AM – Morning (1st batch)</option>
-          <option>12:30 PM – Noon</option>
-          <option>02:30 PM – Afternoon</option>     
-        </select>
-      </div>
-
-    </div>
-
-    <div class="form-footer">
-      <button class="btn-reset">Clear</button>
-      <button class="btn-search">Search Available Buses →</button>
-    </div>
+    </form>
   </div>
 
   <div style="margin-top:16px; padding:12px 16px; background:#fff8e1; border:1.5px solid #f0c040; border-radius:6px; font-size:13px; color:#7a5c00; font-family:var(--mono);">
@@ -518,5 +512,56 @@
 <footer>
   © 2026 BRAC University &nbsp;|&nbsp; Developed by Rafi Ahamed (ID: 22241052)
 </footer>
+
+    <script id="locations-data" type="application/json">
+      {!! json_encode($locations) !!}
+    </script>
+
+    <script>
+    const locations = JSON.parse(document.getElementById("locations-data").textContent);
+    const from = document.getElementById("from");
+    const to = document.getElementById("to");
+    from.addEventListener("change", function () {
+        to.innerHTML = "";
+        if (from.value === "Campus (Badda)") {
+            locations.forEach(loc => {
+                if (loc !== "Campus (Badda)") {
+                    to.innerHTML += `<option value="${loc}">${loc}</option>`;
+                }
+            });
+        } else {
+            to.innerHTML = `<option value="Campus (Badda)">Campus (Badda)</option>`;
+            to.value = "Campus (Badda)";
+        }
+    });
+
+      const input = document.getElementById("travel-date");
+      const today = new Date();
+      const maxDate = new Date();
+      maxDate.setDate(today.getDate() + 2)
+      const format = d => d.toISOString().split('T')[0];
+      input.min = format(today);
+      input.max = format(maxDate);
+      input.value = format(today);
+    </script>
+
+    <script>
+      document.getElementById("searchForm").addEventListener("submit", function(e) {
+
+          const date = document.getElementById("travel-date").value;
+          const time = document.getElementById("time-slot").value;
+
+          if (!date || !time) return;
+
+          const selectedDateTime = new Date(date + "T" + time);
+          const now = new Date();
+
+          if (selectedDateTime < now) {
+              e.preventDefault();
+              alert("❌ You cannot search past buses.");
+          }
+      });
+</script>
+    
 </body>
 </html>

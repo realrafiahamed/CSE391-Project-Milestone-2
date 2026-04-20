@@ -116,7 +116,7 @@
 
         <div class="register-link" style="margin-top:15px;">
             No account? <a href="{{ route('register') }}">Register</a><br>
-            For admin? <a href="{{ url('/admin/login') }}">Login here</a>
+            For admin? <a href="{{ route('admin.login') }}">Login here</a>
         </div>
     </div>
 </div>
